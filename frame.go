@@ -112,7 +112,7 @@ func (f *FrameScanner) Reset(r io.Reader) {
 
 func NewFrameScanner(r io.Reader, buf []byte, maxFrameSize int) *FrameScanner {
 	if cap(buf) < 1 {
-		panic(`syslogp.FrameScanner: buffer capacity must be greater then zero.`)
+		panic(`syslogp.FrameScanner: buffer capacity must be greater than zero.`)
 	}
 	return &FrameScanner{
 		r:            r,
