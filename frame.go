@@ -193,6 +193,11 @@ func (f *FrameWriter) write(p []byte) (n int, err error) {
 }
 
 func NewFrameWriter(w io.Writer, buf []byte) *FrameWriter {
+	if fw, ok := w.(*FrameWriter); ok {
+		fw.buf = buf
+		fw.offset = 0
+		return fw
+	}
 	return &FrameWriter{w: w, buf: buf}
 }
 
