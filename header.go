@@ -5,26 +5,25 @@ import (
 	"time"
 )
 
-func Severity(pri uint8) uint8 { return pri & 0x07 }
-func Facility(pri uint8) uint8 { return pri & 0xf8 }
+type Priority uint32
 
-func SeverityString(pri uint8) string {
-	return severity[int(Severity(pri))]
-}
+func (p Priority) Severity() Priority     { return p & 0x07 }
+func (p Priority) SeverityString() string { return severity[int(p&0x07)] }
 
-func FacilityString(pri uint8) string {
-	i := int(Facility(pri) >> 3)
+func (p Priority) Facility() Priority { return p & 0xf8 }
+func (p Priority) FacilityString() string {
+	i := int(p >> 3)
 	if i >= len(facility) {
 		i = 0
 	}
 	return facility[i]
 }
 
-func PriorityString(pri uint8) string {
+func (p Priority) String() string {
 	buf := [16]byte{}
-	i := copy(buf[0:], FacilityString(pri))
+	i := copy(buf[0:], p.FacilityString())
 	buf[i], i = '.', i+1
-	i += copy(buf[i:], SeverityString(pri))
+	i += copy(buf[i:], p.SeverityString())
 
 	return string(buf[:i])
 }
@@ -118,12 +117,11 @@ _err:
 }
 
 // ([0-9] | [1-9][0-9] | [1][0-8][0-9] | [1][9][01])
-func ParsePriority(data []byte, pos *int) (uint8, error) {
+func ParsePriority(data []byte, pos *int) (pri Priority, _ error) {
 	var (
 		c     byte
 		state uint8
 		eof   = len(data)
-		pri   uint8
 	)
 	if eof == 0 || eof <= *pos {
 		goto _err
@@ -196,7 +194,7 @@ _resume:
 	}
 _pri:
 	pri *= 10
-	pri += uint8(c - '0')
+	pri += Priority(c - '0')
 _next:
 	if *pos++; *pos != eof {
 		goto _resume
@@ -209,6 +207,8 @@ _out:
 _err:
 	return 0, ErrPriority
 }
+
+type Version uint32
 
 // [1-9][0-9]{,2}
 func ScanVersion(data []byte, pos *int) ([]byte, error) {
@@ -262,12 +262,11 @@ _err:
 }
 
 // [1-9][0-9]{,2}
-func ParseVersion(data []byte, pos *int) (uint16, error) {
+func ParseVersion(data []byte, pos *int) (ver Version, _ error) {
 	var (
 		c     byte
 		state uint8
 		eof   = len(data)
-		ver   uint16
 	)
 	if eof == 0 || eof <= *pos {
 		goto _err
@@ -301,7 +300,7 @@ _resume:
 	}
 _ver:
 	ver *= 10
-	ver += uint16(c - '0')
+	ver += Version(c - '0')
 _next:
 	if *pos++; *pos != eof {
 		goto _resume
@@ -1002,42 +1001,42 @@ func scanField(data []byte, pos *int, width int, err error) ([]byte, error) {
 
 const (
 	// Severity
-	EMERG   uint8 = iota // 0
-	ALERT                // 1
-	CRIT                 // 2
-	ERROR                // 3
-	WARNING              // 4
-	NOTICE               // 5
-	INFO                 // 6
-	DEBUG                // 7
+	EMERG   Priority = iota // 0
+	ALERT                   // 1
+	CRIT                    // 2
+	ERROR                   // 3
+	WARNING                 // 4
+	NOTICE                  // 5
+	INFO                    // 6
+	DEBUG                   // 7
 )
 
 const (
 	// Facility
-	KERN     uint8 = iota << 3 // 0
-	USER                       // 8
-	MAIL                       // 16
-	DAEMON                     // 24
-	AUTH                       // 32
-	SYSLOG                     // 40
-	LPR                        // 48
-	NEWS                       // 56
-	UUCP                       // 64
-	CRON                       // 72
-	AUTHPRIV                   // 80
-	FTP                        // 88
-	NTP                        // 96
-	AUDITLOG                   // 104
-	ALERTLOG                   // 112
-	CLOCK                      // 120
-	LOCAL0                     // 128
-	LOCAL1                     // 136
-	LOCAL2                     // 144
-	LOCAL3                     // 152
-	LOCAL4                     // 160
-	LOCAL5                     // 168
-	LOCAL6                     // 176
-	LOCAL7                     // 184
+	KERN     Priority = iota << 3 // 0
+	USER                          // 8
+	MAIL                          // 16
+	DAEMON                        // 24
+	AUTH                          // 32
+	SYSLOG                        // 40
+	LPR                           // 48
+	NEWS                          // 56
+	UUCP                          // 64
+	CRON                          // 72
+	AUTHPRIV                      // 80
+	FTP                           // 88
+	NTP                           // 96
+	AUDITLOG                      // 104
+	ALERTLOG                      // 112
+	CLOCK                         // 120
+	LOCAL0                        // 128
+	LOCAL1                        // 136
+	LOCAL2                        // 144
+	LOCAL3                        // 152
+	LOCAL4                        // 160
+	LOCAL5                        // 168
+	LOCAL6                        // 176
+	LOCAL7                        // 184
 )
 
 var (

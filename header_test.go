@@ -6,45 +6,9 @@ import (
 	"time"
 )
 
-func Test_SeverityString(t *testing.T) {
-	cases := [...]struct {
-		in  uint8
-		exp string
-	}{
-		{EMERG, `EMERG`}, {ALERT, `ALERT`}, {CRIT, `CRIT`}, {ERROR, `ERROR`},
-		{WARNING, `WARNING`}, {NOTICE, `NOTICE`}, {INFO, `INFO`}, {DEBUG, `DEBUG`},
-	}
-	for _, c := range cases {
-		out := SeverityString(c.in)
-		if c.exp != out {
-			t.Errorf("for %d, expected %q, got %q", c.in, c.exp, out)
-		}
-	}
-}
-
-func Test_FacilityString(t *testing.T) {
-	cases := [...]struct {
-		in  uint8
-		exp string
-	}{
-		{KERN, `KERN`}, {USER, `USER`}, {MAIL, `MAIL`}, {DAEMON, `DAEMON`},
-		{AUTH, `AUTH`}, {SYSLOG, `SYSLOG`}, {LPR, `LPR`}, {NEWS, `NEWS`},
-		{UUCP, `UUCP`}, {CRON, `CRON`}, {AUTHPRIV, `AUTHPRIV`}, {FTP, `FTP`},
-		{NTP, `NTP`}, {AUDITLOG, `AUDITLOG`}, {ALERTLOG, `ALERTLOG`}, {CLOCK, `CLOCK`},
-		{LOCAL0, `LOCAL0`}, {LOCAL1, `LOCAL1`}, {LOCAL2, `LOCAL2`}, {LOCAL3, `LOCAL3`},
-		{LOCAL4, `LOCAL4`}, {LOCAL5, `LOCAL5`}, {LOCAL6, `LOCAL6`}, {LOCAL7, `LOCAL7`},
-	}
-	for _, c := range cases {
-		out := FacilityString(c.in)
-		if c.exp != out {
-			t.Errorf("for %d, expected %q, got %q", c.in, c.exp, out)
-		}
-	}
-}
-
 func Test_PriorityString(t *testing.T) {
 	cases := [...]struct {
-		in  uint8
+		in  Priority
 		exp string
 	}{
 		{KERN | EMERG, `KERN.EMERG`},
@@ -57,9 +21,9 @@ func Test_PriorityString(t *testing.T) {
 		{UUCP | DEBUG, `UUCP.DEBUG`},
 	}
 	for _, c := range cases {
-		out := PriorityString(c.in)
+		out := c.in.String()
 		if c.exp != out {
-			t.Errorf("for %d (%d.%d), expected %q, got: %q", c.in, Facility(c.in), Severity(c.in), c.exp, out)
+			t.Errorf("for %d (%d.%d), expected %q, got: %q", c.in, c.in.Facility(), c.in.Severity(), c.exp, out)
 		}
 	}
 }
@@ -93,7 +57,7 @@ func Test_ScanPriority(t *testing.T) {
 func Test_ParsePriority(t *testing.T) {
 	cases := [...]struct {
 		in  []byte
-		exp uint8
+		exp Priority
 		pos int
 		err error
 	}{
@@ -145,7 +109,7 @@ func Test_ScanVersion(t *testing.T) {
 func Test_ParseVersion(t *testing.T) {
 	cases := [...]struct {
 		in  []byte
-		exp uint16
+		exp Version
 		pos int
 		err error
 	}{
