@@ -123,7 +123,7 @@ func Test_IsIdent(t *testing.T) {
 func Test_ParseValue(t *testing.T) {
 	cases := [...]struct {
 		in  []byte
-		typ int
+		typ ValueType
 		exp interface{}
 	}{
 		{[]byte(`null`), Nil, nil},
@@ -142,23 +142,10 @@ func Test_ParseValue(t *testing.T) {
 		{[]byte(`two \"double quotes\"`), 2, `two "double quotes"`},
 		{[]byte(`three\\\\\\backslash`), 3, `three\\\backslash`},
 	}
-	l := func(typ int) string {
-		switch typ {
-		case Nil:
-			return `nil`
-		case False, True:
-			return `bool`
-		case Float:
-			return `float64`
-		case Int:
-			return `int64`
-		}
-		return `string`
-	}
 	for _, c := range cases {
 		out := ParseValue(c.in, c.typ)
-		if c.exp != out {
-			t.Errorf("\n\tfor: %v %s(%s)\n\texp: %T(%v)\n\tgot: %T(%v)\n", c.in, l(c.typ), c.in, c.exp, c.exp, out, out)
+		if c.exp == out {
+			t.Errorf("\n\tfor: %v %s(%s)\n\texp: %T(%v)\n\tgot: %T(%v)\n", c.in, c.typ, c.in, c.exp, c.exp, out, out)
 		}
 	}
 }

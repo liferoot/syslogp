@@ -12,7 +12,7 @@ type StructDataEdger interface {
 }
 
 type StructDataIterator interface {
-	StructDataEach(id, param, value []byte, valueType int) error
+	StructDataEach(id, param, value []byte, typ ValueType) error
 }
 
 func ScanStructData(data []byte, pos *int, quotes bool, iter StructDataIterator) (err error) {
@@ -26,7 +26,7 @@ func ScanStructData(data []byte, pos *int, quotes bool, iter StructDataIterator)
 		value  []byte
 		vstate uint8
 		vlen   uint8
-		vtyp   int
+		vtyp   ValueType
 	)
 	edger, edgerOk := iter.(StructDataEdger)
 
@@ -319,20 +319,20 @@ func valueType(state, len *uint8, c byte) {
 	return
 }
 
-func ParseValue(value []byte, valueType int) interface{} {
+func ParseValue(value []byte, vtyp ValueType) interface{} {
 	if len(value) == 0 || (len(value) == 2 && value[0] == '"') {
 		return ``
 	}
-	if valueType >= 0 {
+	if vtyp >= 0 {
 		if value[0] == '"' {
 			value = value[1 : len(value)-1]
 		}
-		if valueType > 0 {
-			value = Unescape(value, valueType)
+		if vtyp > 0 {
+			value = Unescape(value, int(vtyp))
 		}
 		goto _ret
 	}
-	switch valueType {
+	switch vtyp {
 	case String:
 		goto _ret
 	case Nil:
@@ -385,13 +385,13 @@ type structDataMap struct {
 	id string
 }
 
-func (m *structDataMap) StructDataEach(id, param, value []byte, valueType int) error {
+func (m *structDataMap) StructDataEach(id, param, value []byte, vtyp ValueType) error {
 	if m.id != bytesToStr(&id) {
 		m.id = string(id)
 		m.m[m.id] = make(map[string]interface{})
 	}
 	if len(param) > 0 {
-		(m.m[m.id].(map[string]interface{}))[string(param)] = ParseValue(value, valueType)
+		(m.m[m.id].(map[string]interface{}))[string(param)] = ParseValue(value, vtyp)
 	}
 	return nil
 }
@@ -479,8 +479,29 @@ func IsIdent(id string) bool {
 
 func bytesToStr(b *[]byte) string { return *(*string)(unsafe.Pointer(b)) }
 
+type ValueType int
+
+func (t ValueType) String() string {
+	if t > Nil {
+		return `string`
+	}
+	switch t {
+	case Nil:
+		return `nil`
+	case False:
+		return `false`
+	case True:
+		return `true`
+	case Float:
+		return `float`
+	case Int:
+		return `int`
+	}
+	return `unknown`
+}
+
 const (
-	String = -iota
+	String ValueType = -iota
 	Nil
 	False
 	True
